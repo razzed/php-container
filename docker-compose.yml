@@ -1,0 +1,32 @@
+services:
+  web:
+    environment:
+      BUILD_CODE: web
+      XDEBUG_CONFIG: remote_host=host.docker.internal
+    build:
+      context: ./
+      dockerfile: ./etc/docker/web.Dockerfile
+    volumes:
+      - ./:/var/www/app/
+    ports:
+      - "8000:80"
+  db:
+    environment:
+      BUILD_CODE: db
+    volumes:
+      - database_data:/var/lib/mysql
+    build:
+      context: ./
+      dockerfile: ./etc/docker/db.Dockerfile
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: [ "CMD-SHELL", "/db-health.sh" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+volumes:
+  file_data:
+    driver: local
+  database_data:
+    driver: local
