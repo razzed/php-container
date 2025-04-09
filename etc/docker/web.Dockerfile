@@ -11,10 +11,8 @@ ENV USER_HOME=/var/www
 ENV APPLICATION_HOME=/var/www/app
 ENV WEB_ROOT=$APPLICATION_HOME/public
 
-# IDENTICAL phpContainerDockerPrefix 15
+# IDENTICAL phpContainerDockerPrefix 13
 ENV APPLICATION_CONF=/etc/application.conf
-
-ADD . "$APPLICATION_HOME"
 
 RUN printf -- "%s\n" "$BUILD_CODE" > /etc/docker-role
 COPY etc/docker/install.sh /usr/local/sbin/install.sh
@@ -25,10 +23,13 @@ COPY bin/build/ /usr/local/bin/build/
 RUN /usr/local/sbin/install.sh
 RUN /usr/local/sbin/install.sh __installBase
 RUN /usr/local/sbin/install.sh __installDevelopment
-RUN touch /tmp/application.conf
+COPY .env /tmp/application.conf
 # -- phpContainerDockerPrefix
 
-RUN /usr/local/sbin/install.sh __installEnvironment /tmp/application.conf "$APPLICATION_CONF" "$APPLICATION_HOME"
+ADD . "$APPLICATION_HOME"
+
+RUN /usr/local/sbin/install.sh __installEnvironment /tmp/application.conf "$APPLICATION_CONF" "$APPLICATION_HOME" XDEBUG_IDE_KEY XDEBUG_CLIENT_HOST
+# RUN rm -f /tmp/application.conf
 
 # ===========================================================================
 # -- Middle part --
@@ -58,7 +59,10 @@ COPY etc/docker/web.conf /etc/apache2/sites-available/MAP.web.conf
 COPY etc/docker/bashrc.sh "$USER_HOME/MAP..bashrc"
 COPY etc/docker/bashrc.sh "/root/MAP..bashrc"
 
-RUN /usr/local/sbin/install.sh __mapFiles --keep "$APPLICATION_HOME" /
+# XDebug
+COPY etc/docker/xdebug.ini /usr/local/etc/php/conf.d/MAP.xdebug.ini
+
+RUN /usr/local/sbin/install.sh __mapFiles / --keep "$APPLICATION_HOME"
 
 RUN /usr/sbin/a2enmod rewrite alias
 # RUN printf "%s\n" "*" | a2disconf >/dev/null || :

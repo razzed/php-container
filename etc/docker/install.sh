@@ -47,18 +47,13 @@ __phpExtensionDependency() {
   esac
 }
 
-# List of all PHP valid extensions as of April 2025 (Debian)
+# As of April 2025
 __phpExtensionsList() {
-  printf "%s\n" bcmath bz2 calendar ctype curl dba dl_test dom enchant exif \
-    ffi fileinfo filter ftp gd gettext gmp hash iconv imap intl json ldap mbstring mysqli \
-    oci8 odbc opcache pcntl pdo pdo_dblib pdo_firebird pdo_mysql pdo_oci pdo_odbc pdo_pgsql pdo_sqlite pgsql phar posix pspell \
-    readline reflection session shmop simplexml snmp soap sockets sodium spl standard sysvmsg sysvsem sysvshm tidy tokenizer \
-    xml xmlreader xmlwriter xsl zend_test zip
+  printf "%s\n" bcmath bz2 calendar ctype curl dba dl_test dom enchant exif ffi fileinfo filter ftp gd gettext gmp hash iconv imap intl json ldap mbstring mysqli oci8 odbc opcache pcntl pdo pdo_dblib pdo_firebird pdo_mysql pdo_oci pdo_odbc pdo_pgsql pdo_sqlite pgsql phar posix pspell readline reflection session shmop simplexml snmp soap sockets sodium spl standard sysvmsg sysvsem sysvshm tidy tokenizer xml xmlreader xmlwriter xsl zend_test zip
 }
 
-# Does an extension exist?
 __phpExtensionExists() {
-  grep -q -e "^$(quoteGrepPattern "${1}")\$" < <(__phpExtensionsList)
+  grep -q -e "^${1}\$" < <(__phpExtensionsList)
 }
 
 #
@@ -286,11 +281,13 @@ __applicationValues() {
 # Argument: variables - EnvironmentName. Optional. Require these.
 __installEnvironment() {
   local usage="_return"
-  local source target
+  local source target application=""
 
   source=$(usageArgumentFile "$usage" "source" "${1-}") && shift || return $?
   target=$(usageArgumentFileDirectory "$usage" "target" "${1-}") && shift || return $?
-  application=$(usageArgumentDirectory "$usage" "application" "${1-}") && shift || return $?
+  application="${1-}" && shift
+  [ -z "$application" ] || application=$(usageArgumentDirectory "$usage" "application" "$application") || return $?
+
   __catchEnvironment "$usage" cp -f "$source" "$target" || return $?
 
   __catchEnvironment "$usage" environmentFileLoad "$source" || return $?
@@ -309,7 +306,9 @@ __installEnvironment() {
 
   __dsnExpansions "$usage" "$target" DSN || return $?
   __catchEnvironment "$usage" __productionValues "$production" >>"$target" || return $?
-  __catchEnvironment "$usage" __applicationValues "$application" >>"$target" || return $?
+  if [ -d "$application" ]; then
+    __catchEnvironment "$usage" __applicationValues "$application" >>"$target" || return $?
+  fi
   # Sanity check I guess with Docker layers:
   if [ -f "$target" ]; then
     __catchEnvironment "$usage" statusMessage --last decorate success "$target exists" || return $?

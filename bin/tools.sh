@@ -5,7 +5,7 @@
 # Copyright &copy; 2025, Market Acumen, Inc.
 #
 # This file generically loads all application tools in `./bin/tools` and allows for extensions
-# Zesk Build for an application with little effort.
+# to Zesk Build within an application with little effort.
 #
 # Copy this file into your application project at `./bin/` next to `install-bin-build.sh`
 #
